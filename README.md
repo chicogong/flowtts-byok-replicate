@@ -8,10 +8,32 @@
 |------|------|------|
 | **Replicate** | https://replicate.com/chicogong/flow-tts | API + Playground |
 | **Hugging Face** | https://huggingface.co/spaces/gonghaoran/flow-tts | 免费 Gradio 演示 |
+| **Google Colab** | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chicogong/flowtts-byok-replicate/blob/master/colab/FlowTTS_Demo.ipynb) | 交互式 Notebook |
+
+## 项目结构
+
+```
+flowtts-byok-replicate/
+├── README.md           # 主文档
+├── cog.yaml            # Replicate 配置
+├── predict.py          # Replicate 代码
+├── hf-space/           # Hugging Face Space 部署代码
+│   ├── Dockerfile
+│   ├── app.py
+│   ├── requirements.txt
+│   └── README.md
+├── streamlit/          # Streamlit 版本（可自行部署）
+│   ├── app.py
+│   └── requirements.txt
+├── colab/              # Google Colab Notebook
+│   └── FlowTTS_Demo.ipynb
+└── examples/           # 示例输出
+    └── sample_output.wav
+```
 
 ## 概述
 
-这是一个部署在 [Replicate](https://replicate.com) 和 [Hugging Face Spaces](https://huggingface.co/spaces) 上的 TTS（文字转语音）模型封装。
+这是一个部署在多个平台上的 TTS（文字转语音）模型封装。
 
 **重要说明：**
 - 本模型**不提供任何 API 密钥**
@@ -37,7 +59,13 @@
 
 访问 https://huggingface.co/spaces/gonghaoran/flow-tts ，填写凭证即可在线体验。
 
-### 方式二：Replicate Web Playground
+### 方式二：Google Colab（推荐开发者）
+
+点击下方按钮直接在 Colab 中运行：
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chicogong/flowtts-byok-replicate/blob/master/colab/FlowTTS_Demo.ipynb)
+
+### 方式三：Replicate Web Playground
 
 访问 https://replicate.com/chicogong/flow-tts ，在表单中填写：
 - `text`: 要合成的文本
@@ -45,7 +73,7 @@
 - `secret_key`: 你的腾讯云 SecretKey
 - `sdk_app_id`: 你的 TRTC SdkAppId
 
-### 方式三：cURL 调用
+### 方式四：cURL 调用
 
 ```bash
 curl -s -X POST "https://api.replicate.com/v1/predictions" \
@@ -65,7 +93,7 @@ curl -s -X POST "https://api.replicate.com/v1/predictions" \
   }'
 ```
 
-### 方式四：Python SDK
+### 方式五：Python SDK
 
 ```python
 import replicate
@@ -88,7 +116,7 @@ output = replicate.run(
 print(output)
 ```
 
-### 方式五：异步调用 + Webhook（推荐长文本）
+### 方式六：异步调用 + Webhook（推荐长文本）
 
 ```python
 import replicate
@@ -109,6 +137,15 @@ prediction = replicate.predictions.create(
 print(f"Prediction ID: {prediction.id}")
 # Replicate 会在完成后 POST 到你的 webhook
 ```
+
+### 方式七：自行部署 Streamlit
+
+如果你想自己部署 Streamlit 版本：
+
+1. Fork 本仓库
+2. 访问 [Streamlit Cloud](https://share.streamlit.io/)
+3. 选择 `streamlit/app.py` 作为入口文件
+4. 部署即可
 
 ## 输入参数
 
@@ -198,8 +235,12 @@ cog push r8.im/chicogong/flow-tts
 
 ## 技术栈
 
-- **Replicate**: Cog + tencentcloud-sdk-python
-- **Hugging Face**: Docker + Gradio 3.50.2 + tencentcloud-sdk-python
+| 平台 | 技术 |
+|------|------|
+| **Replicate** | Cog + tencentcloud-sdk-python |
+| **Hugging Face** | Docker + Gradio 3.50.2 |
+| **Streamlit** | Streamlit + tencentcloud-sdk-python |
+| **Colab** | Jupyter Notebook + tencentcloud-sdk-python |
 
 ## 许可证
 
