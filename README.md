@@ -1,16 +1,24 @@
 # FlowTTS BYOK Replicate
 
-基于腾讯云 FlowTTS 的 Replicate 封装，支持 BYOK（Bring Your Own Key）模式。
+基于腾讯云 FlowTTS 的语音合成服务封装，支持 BYOK（Bring Your Own Key）模式。
+
+## 在线体验
+
+| 平台 | 链接 | 说明 |
+|------|------|------|
+| **Replicate** | https://replicate.com/chicogong/flow-tts | API + Playground |
+| **Hugging Face** | https://huggingface.co/spaces/gonghaoran/flow-tts | 免费 Gradio 演示 |
 
 ## 概述
 
-这是一个部署在 [Replicate](https://replicate.com) 上的 TTS（文字转语音）模型封装。
+这是一个部署在 [Replicate](https://replicate.com) 和 [Hugging Face Spaces](https://huggingface.co/spaces) 上的 TTS（文字转语音）模型封装。
 
 **重要说明：**
 - 本模型**不提供任何 API 密钥**
 - 用户必须**自带腾讯云凭证**（BYOK）
 - 这是一个 wrapper，实际语音合成由腾讯云 FlowTTS 完成
 - 输入的 SSE 流式 PCM 音频会被拼接并转换为 WAV 文件返回
+- **不需要 GPU**，运行在 CPU 上
 
 ## 前置条件
 
@@ -19,21 +27,25 @@
 1. **腾讯云账号** - [注册地址](https://cloud.tencent.com/)
 2. **开通 TRTC 服务** - [控制台](https://console.cloud.tencent.com/trtc)
 3. **获取凭证：**
-   - `SecretId` - API 密钥 ID
+   - `SecretId` - API 密钥 ID（[获取地址](https://console.cloud.tencent.com/cam/capi)）
    - `SecretKey` - API 密钥
    - `SdkAppId` - TRTC 应用 ID
 
 ## 使用方法
 
-### 方式一：Replicate Web Playground
+### 方式一：Hugging Face Space（推荐体验）
 
-访问模型页面，在表单中填写：
+访问 https://huggingface.co/spaces/gonghaoran/flow-tts ，填写凭证即可在线体验。
+
+### 方式二：Replicate Web Playground
+
+访问 https://replicate.com/chicogong/flow-tts ，在表单中填写：
 - `text`: 要合成的文本
 - `secret_id`: 你的腾讯云 SecretId
 - `secret_key`: 你的腾讯云 SecretKey
 - `sdk_app_id`: 你的 TRTC SdkAppId
 
-### 方式二：cURL 调用
+### 方式三：cURL 调用
 
 ```bash
 curl -s -X POST "https://api.replicate.com/v1/predictions" \
@@ -53,13 +65,13 @@ curl -s -X POST "https://api.replicate.com/v1/predictions" \
   }'
 ```
 
-### 方式三：Python SDK
+### 方式四：Python SDK
 
 ```python
 import replicate
 
 output = replicate.run(
-    "<USERNAME>/flowtts-byok-replicate:<VERSION>",
+    "chicogong/flow-tts",
     input={
         "text": "你好，欢迎使用语音合成服务。",
         "secret_id": "YOUR_TENCENT_SECRET_ID",
@@ -76,7 +88,7 @@ output = replicate.run(
 print(output)
 ```
 
-### 方式四：异步调用 + Webhook（推荐长文本）
+### 方式五：异步调用 + Webhook（推荐长文本）
 
 ```python
 import replicate
@@ -164,14 +176,15 @@ cog predict \
 # 登录
 cog login
 
-# 推送（替换为你的用户名）
-cog push r8.im/<YOUR_USERNAME>/flowtts-byok-replicate
+# 推送
+cog push r8.im/chicogong/flow-tts
 ```
 
 ## 安全说明
 
 - `secret_id` 和 `secret_key` 使用 Cog 的 `Secret` 类型，在 Replicate 系统中会被自动脱敏
 - 凭证只在容器内使用，不会被记录或返回
+- Hugging Face Space 同样不存储任何凭证
 - 建议在腾讯云控制台为 API 密钥设置适当的权限和配额限制
 
 ## 错误处理
@@ -182,6 +195,11 @@ cog push r8.im/<YOUR_USERNAME>/flowtts-byok-replicate
 | `Rate limit exceeded` | 超出腾讯云 API 调用限制 |
 | `Text too long` | 文本超过 2000 字符限制 |
 | `No audio data received` | 上游 API 未返回音频数据 |
+
+## 技术栈
+
+- **Replicate**: Cog + tencentcloud-sdk-python
+- **Hugging Face**: Docker + Gradio 3.50.2 + tencentcloud-sdk-python
 
 ## 许可证
 
