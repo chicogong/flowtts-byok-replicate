@@ -198,5 +198,5 @@ st.markdown("""
 **说明：** 
 - 本服务仅提供接口封装，不存储任何凭证和数据
 - 语音合成由腾讯云 FlowTTS 完成，费用由腾讯云收取
-- [GitHub](https://github.com/chicogong/flowtts-byok-replicate) | [Replicate](https://replicate.com/chicogong/flow-tts) | [Hugging Face](https://huggingface.co/spaces/gonghaoran/flow-tts)
+- [GitHub](https://github.com/chicogong/flowtts-byok) | [Replicate](https://replicate.com/chicogong/flow-tts) | [Hugging Face](https://huggingface.co/spaces/gonghaoran/flow-tts)
 """)
