@@ -2,6 +2,7 @@
 
 [![Replicate](https://replicate.com/chicogong/flow-tts/badge)](https://replicate.com/chicogong/flow-tts)
 [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/gonghaoran/flow-tts)
+[![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit)](https://flowtts.streamlit.app/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chicogong/flowtts-byok/blob/master/colab/FlowTTS_Demo.ipynb)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -14,6 +15,7 @@
 |------|------|------|
 | **Replicate** | https://replicate.com/chicogong/flow-tts | API + Playground |
 | **Hugging Face** | https://huggingface.co/spaces/gonghaoran/flow-tts | 免费 Gradio 演示 |
+| **Streamlit** | https://flowtts.streamlit.app/ | Streamlit 演示 |
 | **Google Colab** | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chicogong/flowtts-byok/blob/master/colab/FlowTTS_Demo.ipynb) | 交互式 Notebook |
 
 ## 项目结构
