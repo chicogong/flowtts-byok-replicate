@@ -1,20 +1,19 @@
-# -*- coding: utf-8 -*-
-# pyright: reportMissingImports=false
 """
 FlowTTS Gradio Demo
 腾讯云 FlowTTS 语音合成演示 - BYOK (Bring Your Own Key)
 """
 
+import base64
 import io
 import json
-import wave
-import base64
 import tempfile
+import wave
+
 import gradio as gr
 from tencentcloud.common import credential
 from tencentcloud.common.profile.client_profile import ClientProfile
 from tencentcloud.common.profile.http_profile import HttpProfile
-from tencentcloud.trtc.v20190722 import trtc_client, models
+from tencentcloud.trtc.v20190722 import models, trtc_client
 
 # Constants
 MODEL = "flow_01_turbo"
@@ -46,35 +45,35 @@ def synthesize(
     sample_rate: str,
 ):
     """Synthesize speech from text using Tencent Cloud FlowTTS."""
-    
+
     # Validation
     if not text or not text.strip():
         raise gr.Error("请输入要合成的文本")
-    
+
     if len(text) > MAX_TEXT_LENGTH:
         raise gr.Error(f"文本过长：{len(text)} 字符（最多 {MAX_TEXT_LENGTH}）")
-    
+
     if not secret_id or not secret_key or not sdk_app_id:
         raise gr.Error("请填写完整的腾讯云凭证（SecretId、SecretKey、SdkAppId）")
-    
+
     try:
         sdk_app_id_int = int(sdk_app_id)
         sample_rate_int = int(sample_rate)
-    except ValueError:
-        raise gr.Error("SdkAppId 和采样率必须是数字")
-    
+    except ValueError as e:
+        raise gr.Error("SdkAppId 和采样率必须是数字") from e
+
     try:
         # Create client
         cred = credential.Credential(secret_id, secret_key)
         http_profile = HttpProfile()
         http_profile.endpoint = ENDPOINT
         http_profile.reqTimeout = 120
-        
+
         client_profile = ClientProfile()
         client_profile.httpProfile = http_profile
-        
+
         client = trtc_client.TrtcClient(cred, REGION, client_profile)
-        
+
         # Build request
         req = models.TextToSpeechSSERequest()
         params = {
@@ -93,7 +92,7 @@ def synthesize(
             "SdkAppId": sdk_app_id_int,
         }
         req.from_json_string(json.dumps(params))
-        
+
         # Call API and collect audio
         audio_chunks = []
         resp = client.TextToSpeechSSE(req)
@@ -107,43 +106,43 @@ def synthesize(
                         break
                 except (json.JSONDecodeError, KeyError):
                     continue
-        
+
         if not audio_chunks:
             raise gr.Error("未收到音频数据，请检查凭证和参数")
-        
+
         # Convert to WAV and save to temp file
         pcm_data = b"".join(audio_chunks)
         wav_data = pcm_to_wav(pcm_data, sample_rate=sample_rate_int)
-        
+
         # Save to temp file and return path
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
             f.write(wav_data)
             return f.name
-        
+
     except gr.Error:
         raise
     except Exception as e:
         error_msg = str(e)
         if "AuthFailure" in error_msg:
-            raise gr.Error("认证失败，请检查 SecretId、SecretKey 和 SdkAppId")
+            raise gr.Error("认证失败，请检查 SecretId、SecretKey 和 SdkAppId") from e
         elif "InvalidParameter" in error_msg:
-            raise gr.Error(f"参数错误：{error_msg}")
+            raise gr.Error(f"参数错误：{error_msg}") from e
         elif "RequestLimitExceeded" in error_msg:
-            raise gr.Error("请求频率超限，请稍后再试")
+            raise gr.Error("请求频率超限，请稍后再试") from e
         else:
-            raise gr.Error(f"合成失败：{error_msg}")
+            raise gr.Error(f"合成失败：{error_msg}") from e
 
 
 # Gradio UI
 with gr.Blocks(title="FlowTTS 语音合成") as demo:
     gr.Markdown("""
     # FlowTTS 语音合成
-    
+
     基于腾讯云 FlowTTS 的文字转语音服务。**需要自带腾讯云凭证 (BYOK)**。
-    
+
     获取凭证：[腾讯云控制台](https://console.cloud.tencent.com/cam/capi) | [开通 TRTC](https://console.cloud.tencent.com/trtc)
     """)
-    
+
     with gr.Row():
         with gr.Column(scale=2):
             text_input = gr.Textbox(
@@ -151,7 +150,7 @@ with gr.Blocks(title="FlowTTS 语音合成") as demo:
                 placeholder="请输入要合成的文本（最多 2000 字符）...",
                 lines=5,
             )
-            
+
             with gr.Accordion("腾讯云凭证 (必填)", open=True):
                 secret_id = gr.Textbox(
                     label="SecretId",
@@ -167,7 +166,7 @@ with gr.Blocks(title="FlowTTS 语音合成") as demo:
                     label="SdkAppId (例如: 1400000000)",
                     placeholder="1400000000",
                 )
-            
+
             with gr.Accordion("高级设置", open=False):
                 voice_id = gr.Textbox(
                     label="音色 ID",
@@ -199,20 +198,20 @@ with gr.Blocks(title="FlowTTS 语音合成") as demo:
                         choices=["16000", "24000"],
                         value="24000",
                     )
-            
+
             submit_btn = gr.Button("合成语音", variant="primary")
-        
+
         with gr.Column(scale=1):
             audio_output = gr.Audio(label="合成结果")
-    
+
     gr.Markdown("""
     ---
-    **说明：** 
+    **说明：**
     - 本服务仅提供接口封装，不存储任何凭证和数据
     - 语音合成由腾讯云 FlowTTS 完成，费用由腾讯云收取
     - [GitHub](https://github.com/chicogong/flowtts-byok) | [Replicate](https://replicate.com/chicogong/flow-tts)
     """)
-    
+
     submit_btn.click(
         fn=synthesize,
         inputs=[

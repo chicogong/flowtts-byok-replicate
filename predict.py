@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 FlowTTS BYOK Replicate Wrapper
 
@@ -12,18 +11,16 @@ The wrapper:
 4. Converts to WAV format and returns the file
 """
 
+import base64
 import io
 import json
 import wave
-import base64
-from typing import Optional
 
 from cog import BasePredictor, Input, Path, Secret
 from tencentcloud.common import credential
 from tencentcloud.common.profile.client_profile import ClientProfile
 from tencentcloud.common.profile.http_profile import HttpProfile
-from tencentcloud.trtc.v20190722 import trtc_client, models
-
+from tencentcloud.trtc.v20190722 import models, trtc_client
 
 # Constants
 MODEL = "flow_01_turbo"
@@ -33,10 +30,7 @@ MAX_TEXT_LENGTH = 2000  # Character limit per Tencent Cloud API
 
 
 def pcm_to_wav(
-    pcm_data: bytes,
-    sample_rate: int = 24000,
-    channels: int = 1,
-    sample_width: int = 2
+    pcm_data: bytes, sample_rate: int = 24000, channels: int = 1, sample_width: int = 2
 ) -> bytes:
     """
     Convert raw PCM audio data to WAV format.
@@ -77,57 +71,40 @@ class Predictor(BasePredictor):
     def predict(
         self,
         # Required inputs
-        text: str = Input(
-            description="Text to synthesize (max 2000 characters)"
-        ),
+        text: str = Input(description="Text to synthesize (max 2000 characters)"),
         # BYOK credentials (Secret type for security)
-        secret_id: Secret = Input(
-            description="Tencent Cloud SecretId (BYOK)"
-        ),
-        secret_key: Secret = Input(
-            description="Tencent Cloud SecretKey (BYOK)"
-        ),
-        sdk_app_id: int = Input(
-            description="Tencent Cloud TRTC SdkAppId (BYOK)"
-        ),
+        secret_id: Secret = Input(description="Tencent Cloud SecretId (BYOK)"),
+        secret_key: Secret = Input(description="Tencent Cloud SecretKey (BYOK)"),
+        sdk_app_id: int = Input(description="Tencent Cloud TRTC SdkAppId (BYOK)"),
         # Voice configuration (optional with sensible defaults)
         voice_id: str = Input(
             default="v-female-R2s4N9qJ",
-            description="Voice ID (e.g., v-female-R2s4N9qJ)"
+            description="Voice ID (e.g., v-female-R2s4N9qJ)",
         ),
         speed: float = Input(
-            default=1.0,
-            ge=0.5,
-            le=2.0,
-            description="Speech speed [0.5, 2.0]"
+            default=1.0, ge=0.5, le=2.0, description="Speech speed [0.5, 2.0]"
         ),
         volume: float = Input(
-            default=1.0,
-            ge=0.0,
-            le=10.0,
-            description="Volume [0, 10]"
+            default=1.0, ge=0.0, le=10.0, description="Volume [0, 10]"
         ),
         pitch: int = Input(
-            default=0,
-            ge=-12,
-            le=12,
-            description="Pitch adjustment [-12, 12] semitones"
+            default=0, ge=-12, le=12, description="Pitch adjustment [-12, 12] semitones"
         ),
         language: str = Input(
             default="zh",
             choices=["zh", "en", "yue", "ja", "ko", "auto"],
-            description="Language: zh/en/yue/ja/ko/auto"
+            description="Language: zh/en/yue/ja/ko/auto",
         ),
         sample_rate: int = Input(
             default=24000,
             choices=[16000, 24000],
-            description="Audio sample rate: 16000 or 24000 Hz"
+            description="Audio sample rate: 16000 or 24000 Hz",
         ),
         timeout: int = Input(
             default=120,
             ge=10,
             le=300,
-            description="Request timeout in seconds [10, 300]"
+            description="Request timeout in seconds [10, 300]",
         ),
     ) -> Path:
         """
@@ -155,14 +132,12 @@ class Predictor(BasePredictor):
 
         if len(text) > MAX_TEXT_LENGTH:
             raise ValueError(
-                f"Text too long: {len(text)} characters "
-                f"(max {MAX_TEXT_LENGTH})"
+                f"Text too long: {len(text)} characters (max {MAX_TEXT_LENGTH})"
             )
 
         # Create Tencent Cloud client with user's credentials
         cred = credential.Credential(
-            secret_id.get_secret_value(),
-            secret_key.get_secret_value()
+            secret_id.get_secret_value(), secret_key.get_secret_value()
         )
 
         http_profile = HttpProfile()
@@ -203,9 +178,7 @@ class Predictor(BasePredictor):
                     try:
                         data = json.loads(event["data"].strip())
                         if data.get("Type") == "audio" and data.get("Audio"):
-                            audio_chunks.append(
-                                base64.b64decode(data["Audio"])
-                            )
+                            audio_chunks.append(base64.b64decode(data["Audio"]))
                         if data.get("IsEnd"):
                             break
                     except (json.JSONDecodeError, KeyError):
@@ -217,15 +190,15 @@ class Predictor(BasePredictor):
                 raise RuntimeError(
                     "Authentication failed. Please check your SecretId, "
                     "SecretKey, and SdkAppId."
-                )
+                ) from e
             elif "InvalidParameter" in error_msg:
-                raise RuntimeError(f"Invalid parameter: {error_msg}")
+                raise RuntimeError(f"Invalid parameter: {error_msg}") from e
             elif "RequestLimitExceeded" in error_msg:
                 raise RuntimeError(
                     "Rate limit exceeded. Please try again later."
-                )
+                ) from e
             else:
-                raise RuntimeError(f"TTS API error: {error_msg}")
+                raise RuntimeError(f"TTS API error: {error_msg}") from e
 
         # Validate we got audio data
         if not audio_chunks:
